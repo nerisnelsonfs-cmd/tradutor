@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Tradutor</title>
+<meta name="theme-color" content="#05080f">
+<style>
+  :root{
+    --fundo:#05080f; --sup:#0c1421; --sup2:#111c2e; --borda:#1e3350;
+    --neon:#00f0ff; --texto:#eaf4ff; --texto2:#8fa8c4;
+    --ok:#22e07a; --erro:#ff5470; --aviso:#ffb020; --esc:1;
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:radial-gradient(900px 560px at 50% -14%,rgba(0,240,255,.10),transparent 62%),var(--fundo);
+    color:var(--texto); font-family:'Segoe UI',system-ui,-apple-system,Roboto,Arial,sans-serif;
+    min-height:100vh; padding:18px 15px 34px; font-size:calc(18px*var(--esc)); line-height:1.55;
+  }
+  .caixa{max-width:680px;margin:0 auto}
+
+  header{display:flex;align-items:center;gap:13px;margin-bottom:4px}
+  .marca{width:46px;height:46px;border-radius:13px;flex:0 0 auto;
+    background:linear-gradient(135deg,var(--neon),#0a7ea4);display:grid;place-items:center;
+    font-size:24px;box-shadow:0 0 22px rgba(0,240,255,.4)}
+  h1{margin:0;font-size:1.3em;letter-spacing:.4px;
+    background:linear-gradient(90deg,var(--neon),#7fe7ff);-webkit-background-clip:text;background-clip:text;color:transparent}
+  .sub{color:var(--texto2);font-size:.82em;margin:2px 0 20px}
+
+  .painel{background:linear-gradient(180deg,var(--sup),var(--sup2));border:1px solid var(--borda);
+    border-radius:16px;padding:18px;margin-bottom:14px;box-shadow:0 16px 40px rgba(0,0,0,.44)}
+
+  /* ---- o grande botao de ligar ---- */
+  .ligar{
+    width:100%; min-height:96px; border-radius:16px; border:none; cursor:pointer;
+    font-family:inherit; font-size:1.22em; font-weight:900; letter-spacing:1px;
+    background:linear-gradient(135deg,var(--neon),#0a7ea4); color:#04121b;
+    box-shadow:0 10px 30px rgba(0,240,255,.32);
+    display:flex;align-items:center;justify-content:center;gap:12px;
+    transition:transform .12s,filter .18s;
+  }
+  .ligar:active{transform:scale(.98)}
+  .ligar.on{background:linear-gradient(135deg,#22e07a,#0a8a4a); box-shadow:0 10px 30px rgba(34,224,122,.3)}
+  .ligar:focus-visible{outline:3px solid #fff;outline-offset:3px}
+
+  /* ---- estado ---- */
+  .estado{margin-top:14px;padding:15px 17px;border-radius:12px;background:#060c16;
+    border:1px solid var(--borda);display:flex;align-items:center;gap:13px;min-height:66px}
+  .bolinha{width:14px;height:14px;border-radius:50%;background:#33455e;flex:0 0 auto;transition:.2s}
+  .bolinha.ouvindo{background:var(--neon);box-shadow:0 0 14px var(--neon);animation:p 2s ease-in-out infinite}
+  .bolinha.lendo{background:var(--ok);box-shadow:0 0 14px var(--ok);animation:p 1.2s ease-in-out infinite}
+  .bolinha.erro{background:var(--erro);box-shadow:0 0 14px var(--erro)}
+  @keyframes p{0%,100%{opacity:1}50%{opacity:.28}}
+  .estado b{display:block;font-size:.96em}
+  .estado small{color:var(--texto2);font-size:.79em}
+
+  /* ---- o texto que ela esta lendo ---- */
+  .recado{
+    margin-top:14px;padding:16px;border-radius:12px;background:#060c16;
+    border:1px solid var(--borda); max-height:290px; overflow-y:auto;
+    font-size:.95em; line-height:1.7; color:#cfe4f5; white-space:pre-wrap;
+    display:none;
+  }
+  .recado.on{display:block}
+  .recado:empty{display:none}
+
+  .botoes{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:13px}
+  .botoes button{
+    font-family:inherit;font-size:.94em;font-weight:800;letter-spacing:.6px;
+    padding:15px 12px;border-radius:12px;border:1px solid var(--borda);
+    background:#0e1a2b;color:var(--texto);cursor:pointer;min-height:56px;
+    display:flex;align-items:center;justify-content:center;gap:8px;transition:.15s;
+  }
+  .botoes button:hover:not(:disabled){border-color:var(--neon);background:#12263c}
+  .botoes button:disabled{opacity:.4;cursor:not-allowed}
+  .botoes button:focus-visible{outline:3px solid var(--neon);outline-offset:3px}
+
+  .linha{display:flex;align-items:center;gap:11px;flex-wrap:wrap;margin-top:14px}
+  .linha>span{font-size:.79em;color:var(--texto2);font-weight:800;letter-spacing:.6px}
+  .chip{padding:9px 14px;border-radius:99px;border:1px solid var(--borda);background:#0a1523;
+    color:var(--texto2);cursor:pointer;font-size:.84em;font-weight:800;min-height:44px;
+    display:flex;align-items:center;font-family:inherit}
+  .chip.ativo{background:rgba(0,240,255,.15);border-color:var(--neon);color:var(--neon)}
+  .letras{margin-left:auto;display:flex;gap:7px}
+  .letras button{min-height:44px;padding:9px 14px;border-radius:10px;border:1px solid var(--borda);
+    background:#0e1a2b;color:var(--texto);font-weight:800;cursor:pointer;font-family:inherit}
+
+  .dica{margin-top:16px;padding:14px 16px;border-radius:12px;
+    background:rgba(0,240,255,.055);border:1px solid rgba(0,240,255,.2);
+    font-size:.86em;color:#bfe6f5;line-height:1.65}
+  .dica b{color:var(--neon)}
+  kbd{background:#0a1523;border:1px solid var(--borda);border-bottom-width:2px;border-radius:6px;
+    padding:2px 8px;font-weight:800;font-size:.9em}
+  /* ---- escuta continua (v3.0) ---- */
+  .escuta{
+    width:100%; min-height:72px; margin-top:12px; border-radius:14px; cursor:pointer;
+    font-family:inherit; font-size:1.05em; font-weight:900; letter-spacing:.8px;
+    background:#0e1a2b; color:var(--texto); border:2px solid var(--neon);
+    display:flex;align-items:center;justify-content:center;gap:10px;transition:.15s;
+  }
+  .escuta:hover{background:#12263c}
+  .escuta.on{background:linear-gradient(135deg,#22e07a,#0a8a4a);border-color:#22e07a;color:#04121b}
+  .escuta.pausada{background:linear-gradient(135deg,#ffb020,#b57400);border-color:#ffb020;color:#1b1000}
+  .escuta:focus-visible{outline:3px solid #fff;outline-offset:3px}
+  .escuta:disabled{opacity:.4;cursor:not-allowed}
+  .ouvi{margin-top:10px;padding:12px 15px;border-radius:12px;background:#060c16;
+    border:1px solid var(--borda);font-size:.9em;color:#cfe4f5;min-height:48px;display:none}
+  .ouvi.on{display:block}
+  .ouvi b{color:var(--neon)}
+  .ouvi.enviado b{color:var(--ok)}
+  .ouvi.erro b{color:var(--erro)}
+  .ouvi.ignorado{color:#8fa8c4}
+  .cron{margin-top:10px;padding:12px 15px;border-radius:12px;background:#060c16;
+    border:1px solid var(--borda);font-size:.9em;color:#cfe4f5;display:none}
+  .cron.on{display:block}
+  .cron b{color:var(--aviso)}
+  .cron small{display:block;color:var(--texto2);font-size:.86em;margin-top:3px}
+  .ouvi.ignorado b{color:#8fa8c4}
+  .nota-voz{margin:8px 0 0;font-size:.82em;color:#9fb6cf;line-height:1.5}
+  /* ---- palavra de chamada e ajuda ---- */
+  .palavra{min-height:44px;padding:8px 12px;border-radius:10px;border:1px solid var(--borda);
+    background:#060c16;color:var(--texto);font-family:inherit;font-size:.9em;width:11em;max-width:100%}
+  .palavra:focus-visible{outline:3px solid var(--neon);outline-offset:2px}
+  .palavra:disabled{opacity:.45}
+  .ajuda{margin-top:16px;padding:6px 16px;border-radius:12px;background:#0c1421;border:1px solid var(--borda)}
+  .ajuda summary{cursor:pointer;font-weight:800;padding:12px 0;min-height:44px;color:var(--neon)}
+  .ajuda summary:focus-visible{outline:3px solid var(--neon);outline-offset:3px}
+  .ajuda ol{padding-left:1.3em;margin:4px 0 12px}
+  .ajuda li{margin:8px 0}
+  .ajuda p{font-size:.92em;color:#cfe4f5}
+  .ajuda b{color:#eaf4ff}
+  footer{text-align:center;color:#516b8a;margin-top:24px;font-size:.76em}
+  @media(max-width:520px){ .botoes{grid-template-columns:1fr} }
+</style><style>
+  /* ---- idioma (v1.2) ---- */
+  .idioma{display:flex;gap:6px;margin-left:auto}
+  .idioma .chip{min-height:44px;padding:8px 12px;font-size:.8em}
+  header{flex-wrap:wrap}
+  /* ---- escolha da voz (v1.3) ---- */
+  .voz-sel{min-height:44px;padding:8px 10px;border-radius:10px;border:1px solid var(--borda);
+    background:#060c16;color:var(--texto);font-family:inherit;font-size:.9em;max-width:100%;flex:1 1 12em}
+  .voz-sel:focus-visible{outline:3px solid var(--neon);outline-offset:2px}
+</style>
+</head>
+<body>
+<div class="caixa">
+
+  <header>
+    <div class="marca" aria-hidden="true">🎧</div>
+    <div><h1>TRADUTOR</h1></div>
+    <div class="idioma" role="group" aria-label="Idioma / Language">
+      <button class="chip" data-lang="pt" aria-pressed="false">Português</button>
+      <button class="chip" data-lang="en" aria-pressed="false">English</button>
+    </div>
+  </header>
+  <p class="sub" data-th="sub"></p>
+
+  <div class="painel">
+    <button class="ligar" id="btnLigar"></button>
+
+    <div class="estado">
+      <div class="bolinha" id="bolinha"></div>
+      <div>
+        <b id="eTxt"></b>
+        <small id="eSub"></small>
+      </div>
+    </div>
+
+    <button class="escuta" id="btnEscuta" aria-pressed="false"></button>
+    <div class="ouvi" id="ouvi" aria-live="polite"></div>
+    <div class="cron" id="cron"></div>
+
+    <div class="linha">
+      <span data-t="palavraRotulo"></span>
+      <input id="palavra" class="palavra" type="text" maxlength="30" autocomplete="off" spellcheck="false">
+    </div>
+    <p class="nota-voz" id="notaChamada"></p>
+
+    <p class="nota-voz" data-t="notaEnviar"></p>
+
+    <div class="recado" id="recado"></div>
+
+    <div class="botoes">
+      <button id="btnRepetir" disabled></button>
+      <button id="btnParar" disabled></button>
+    </div>
+
+    <div class="linha">
+      <span data-t="vozRotulo"></span>
+      <select id="voz" class="voz-sel"></select>
+      <button class="chip" id="btnOuvirVoz" data-t="ouvirVoz"></button>
+    </div>
+
+    <div class="linha">
+      <span data-t="velocidade"></span>
+      <button class="chip" data-v="0.85" aria-pressed="false" data-t="devagar"></button>
+      <button class="chip ativo" data-v="1" aria-pressed="true" data-t="normal"></button>
+      <button class="chip" data-v="1.25" aria-pressed="false" data-t="rapido"></button>
+      <div class="letras">
+        <button id="menos">A−</button><button id="mais">A+</button>
+      </div>
+    </div>
+    <p class="nota-voz" id="notaVoz"></p>
+  </div>
+
+  <details class="ajuda">
+    <summary data-t="ajudaTitulo"></summary>
+    <div data-th="ajuda"></div>
+  </details>
+
+  <footer>Tradutor v1.8 · Neris · Equipe Porta Aberta IA</footer>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  /* =====================================================================
+     TRADUTOR v1.8 — a página (português e inglês, voz feminina ou masculina)
+     Criado por Nerisnelson Ferreira da Silva · Equipe Porta Aberta IA
+     A página é servida pelo programa local (tradutor.ps1). Tudo acontece
+     no seu computador: /recado (respostas do Claude) e /fala (sua fala
+     colada no Cowork).
+     ===================================================================== */
+
+  /* ---------------- os textos, nos dois idiomas ---------------- */
+  var T = {
+    pt: {
+      htmlLang: 'pt-BR', fala: 'pt-BR', vozes: /Google|Francisca|Thalita|Antonio|Maria|Daniel|Natural/i,
+      palavraPadrao: 'Tradutor', prefixos: 'ok|ô|oi|ei|olá',
+      parar: /^(?:pode parar|parar a escuta|desligar a escuta|desliga a escuta)[.!]?$/i,
+      sub: '<b>Converse com o Cowork pela voz.</b> Deixe aberto: o Tradutor lê em voz alta as respostas do Claude, e você responde falando.',
+      ligar: '🔇 &nbsp;LIGAR O TRADUTOR', ligado: '🔊 &nbsp;TRADUTOR LIGADO', ligadoFala: 'Tradutor ligado.',
+      desligado: 'Desligado', desligadoSub: 'Toque no botão pra ele começar a ouvir as respostas.',
+      deOuvido: 'De ouvido…', esperando: 'Esperando a próxima resposta.',
+      lendo: 'Lendo pra você…', parte: 'Parte {a} de {b}',
+      semVoz: 'Este navegador não tem voz.', semVozSub: 'Abra esta página no Google Chrome ou no Microsoft Edge.',
+      vozTravou: 'A voz do computador não respondeu.', vozTravouSub: 'Toque em LER DE NOVO. Se continuar, feche e abra o navegador.',
+      semPrograma: 'Não estou alcançando o programa do Tradutor.', semProgramaSub: 'Confira se a janela preta "TRADUTOR" está aberta. Continuo tentando.',
+      repetir: '🔁 &nbsp;LER DE NOVO', parar2: '⏹️ &nbsp;PARAR',
+      vozRotulo: 'VOZ', vozAuto: 'Automática', ouvirVoz: '▶ Ouvir', feminina: 'feminina', masculina: 'masculina',
+      amostra: 'Olá! Esta é a minha voz.',
+      palavraRotulo: 'PALAVRA DE CHAMADA', velocidade: 'VELOCIDADE', devagar: 'Devagar', normal: 'Normal', rapido: 'Rápido',
+      menos: 'Diminuir letras', mais: 'Aumentar letras',
+      notaVoz: 'Escolha a voz (feminina ou masculina) e toque em Ouvir. São as vozes do seu computador: começam na hora e não saem da sua máquina. Pra ter mais vozes, no Windows: Configurações, Hora e idioma, Fala.',
+      notaVozSem: 'Este navegador não tem voz. Abra esta página no Google Chrome ou no Microsoft Edge.',
+      notaChamada: 'Só vai pro Claude o que começar com "{p}". Ex.: "{p}, me explica isso de novo." TV e conversa do lado ficam de fora.',
+      escuta: '🎙️ &nbsp;FALAR SEM CLICAR', escutaSem: '🎙️ &nbsp;FALAR SEM CLICAR (use o Chrome ou o Edge)',
+      escutaPausada: '⏸️ &nbsp;ESCUTA PAUSADA — estou lendo', escutaLigada: '🎙️ &nbsp;ESCUTA LIGADA — pode falar',
+      escutaSemNav: '<b>Este navegador não sabe escutar.</b> Abra esta página no Google Chrome ou no Microsoft Edge pra falar sem clicar.',
+      escutaOn: '<b>Escuta ligada.</b> Comece a frase com "{p}". Quando fizer uma pausa, vai pro Claude.',
+      escutaOff: 'Escuta desligada. Toque de novo quando quiser falar.', escutaOffJunto: 'Escuta desligada junto com o Tradutor.',
+      disseParar: 'Você disse "pode parar". Escuta desligada.', atencao: 'Atenção:',
+      micNegado: 'O navegador não deixou usar o microfone. Toque no cadeado ao lado do endereço, permita o microfone e ligue de novo.',
+      micSem: 'Não achei microfone neste computador. Confira se o fone está ligado e tente de novo.',
+      redeVoz: '<b>Sem conexão com o serviço de voz do navegador.</b> Tentando de novo…',
+      ouvindo: 'Ouvindo:', ignoradoSem: 'Ignorado (não começou com "{p}"):', ignoradoCurto: 'Ignorado (curto demais):',
+      podeFalar: '<b>Pode falar…</b> (espero 8 segundos)', naoOuvi: '<b>Não ouvi a frase.</b> Diga "{p}" de novo quando quiser.',
+      enviando: 'Levando pra caixa do Cowork:', suaFrase: 'Sua frase:',
+      noCaixa: '✓ Na caixa do Cowork — confira e aperte Enter:',
+      notaEnviar: 'Sua frase aparece na caixa do Cowork. Confira e aperte Enter pra mandar — quem envia é você.',
+      faladoColada: 'Frase na caixa. Aperte Enter para mandar.',
+      semPrograma2: '<b>Não consegui falar com o programa do Tradutor.</b> Confira se a janela preta "TRADUTOR" está aberta e fale de novo.',
+      erros: { sem_claude: 'O app Claude não está aberto.', janela: 'O Windows não deixou trazer o Claude pra frente. Clique na janela do Claude uma vez e fale de novo.', ritmo: 'Devagar: espere uns segundos e fale de novo.', outro: 'Não consegui colar no Cowork.' },
+      cron: '⏱ <b>{t} s</b> da sua fala até a resposta começar<small>Resposta chegar: {c} s · Voz começar: {v} s · Média das últimas {n}: {m} s</small>',
+      ajudaTitulo: '📖 Como usar — passo a passo',
+      ajuda: '<ol>'
+        + '<li><b>Deixe a janela preta do programa aberta.</b> Ela se chama "TRADUTOR". Pode minimizar, só não feche.</li>'
+        + '<li><b>Toque em LIGAR O TRADUTOR.</b> Você ouve "Tradutor ligado". Pronto: toda resposta que o Claude mandar pra cá, ele lê em voz alta.</li>'
+        + '<li><b>Pra falar sem digitar:</b> toque em FALAR SEM CLICAR uma vez. O navegador vai pedir o microfone — toque em Permitir.</li>'
+        + '<li><b>Comece cada frase com a palavra de chamada.</b> Ex.: "<span class="exemplo"></span>, qual o tempo amanhã?" Quando você faz uma pausa, a frase aparece na caixa do Cowork. Confira e aperte <b>Enter</b> pra mandar.</li>'
+        + '<li><b>Enquanto a voz lê, o microfone pausa</b> (pra não ouvir a si mesmo) e volta sozinho quando ela termina.</li>'
+        + '<li><b>Pra parar de escutar:</b> diga "pode parar" ou toque no botão de novo.</li></ol>'
+        + '<p><b>O Claude do Cowork precisa saber que você usa o Tradutor.</b> Veja o arquivo <b>para-o-claude</b> que veio junto — ele ensina o Claude a mandar as respostas pra cá. Na primeira vez, o app pede pra deixar o navegador do Claude usar este endereço: toque em permitir.</p>'
+        + '<p><b>Privacidade:</b> as respostas ficam só no seu computador, na memória do programa. O reconhecimento de fala é o do próprio navegador (no Chrome, o áudio é enviado ao serviço de voz do Google pra virar texto).</p>'
+        + '<p><b>Aviso:</b> o Tradutor é um projeto independente, feito para usar junto com o Claude. Não é um produto da Anthropic. "Claude" é marca da Anthropic.</p>'
+    },
+    en: {
+      htmlLang: 'en', fala: 'en-US', vozes: /Google|Aria|Jenny|Guy|Zira|David|Mark|Natural/i,
+      palavraPadrao: 'Translator', prefixos: 'ok|okay|hey|hi',
+      parar: /^(?:stop listening|stop the listening|turn off listening)[.!]?$/i,
+      sub: '<b>Talk to Cowork by voice.</b> Keep it open: Tradutor reads Claude\'s answers aloud, and you reply by speaking.',
+      ligar: '🔇 &nbsp;TURN ON TRADUTOR', ligado: '🔊 &nbsp;TRADUTOR IS ON', ligadoFala: 'Tradutor is on.',
+      desligado: 'Off', desligadoSub: 'Press the button so it starts listening for answers.',
+      deOuvido: 'Listening for answers…', esperando: 'Waiting for the next answer.',
+      lendo: 'Reading to you…', parte: 'Part {a} of {b}',
+      semVoz: 'This browser has no voice.', semVozSub: 'Open this page in Google Chrome or Microsoft Edge.',
+      vozTravou: 'The computer voice did not respond.', vozTravouSub: 'Press READ AGAIN. If it keeps happening, close and reopen the browser.',
+      semPrograma: 'I can\'t reach the Tradutor program.', semProgramaSub: 'Check that the black "TRADUTOR" window is open. I keep trying.',
+      repetir: '🔁 &nbsp;READ AGAIN', parar2: '⏹️ &nbsp;STOP',
+      vozRotulo: 'VOICE', vozAuto: 'Automatic', ouvirVoz: '▶ Listen', feminina: 'female', masculina: 'male',
+      amostra: 'Hello! This is my voice.',
+      palavraRotulo: 'WAKE WORD', velocidade: 'SPEED', devagar: 'Slow', normal: 'Normal', rapido: 'Fast',
+      menos: 'Smaller text', mais: 'Bigger text',
+      notaVoz: 'Choose the voice (female or male) and press Listen. These are your computer\'s own voices: they start right away and never leave your machine. For more voices, in Windows: Settings, Time & language, Speech.',
+      notaVozSem: 'This browser has no voice. Open this page in Google Chrome or Microsoft Edge.',
+      notaChamada: 'Only what starts with "{p}" goes to Claude. E.g.: "{p}, explain that again." TV and nearby talk stay out.',
+      escuta: '🎙️ &nbsp;TALK HANDS-FREE', escutaSem: '🎙️ &nbsp;TALK HANDS-FREE (use Chrome or Edge)',
+      escutaPausada: '⏸️ &nbsp;LISTENING PAUSED — I\'m reading', escutaLigada: '🎙️ &nbsp;LISTENING — go ahead',
+      escutaSemNav: '<b>This browser can\'t listen.</b> Open this page in Google Chrome or Microsoft Edge to talk hands-free.',
+      escutaOn: '<b>Listening.</b> Start your sentence with "{p}". When you pause, it goes to Claude.',
+      escutaOff: 'Listening off. Press again when you want to talk.', escutaOffJunto: 'Listening turned off together with Tradutor.',
+      disseParar: 'You said "stop listening". Listening off.', atencao: 'Attention:',
+      micNegado: 'The browser did not allow the microphone. Click the lock next to the address, allow the microphone and turn it on again.',
+      micSem: 'No microphone found on this computer. Check that your headset is connected and try again.',
+      redeVoz: '<b>No connection to the browser\'s speech service.</b> Trying again…',
+      ouvindo: 'Hearing:', ignoradoSem: 'Ignored (did not start with "{p}"):', ignoradoCurto: 'Ignored (too short):',
+      podeFalar: '<b>Go ahead…</b> (I\'ll wait 8 seconds)', naoOuvi: '<b>I didn\'t hear the sentence.</b> Say "{p}" again whenever you want.',
+      enviando: 'Taking it to the Cowork box:', suaFrase: 'Your sentence:',
+      noCaixa: '✓ In the Cowork box — check it and press Enter:',
+      notaEnviar: 'Your sentence appears in the Cowork box. Check it and press Enter to send — you are the one who sends.',
+      faladoColada: 'Sentence in the box. Press Enter to send.',
+      semPrograma2: '<b>I couldn\'t reach the Tradutor program.</b> Check that the black "TRADUTOR" window is open and speak again.',
+      erros: { sem_claude: 'The Claude app is not open.', janela: 'Windows did not let me bring Claude to the front. Click the Claude window once and speak again.', ritmo: 'Slow down: wait a few seconds and speak again.', outro: 'I couldn\'t paste into Cowork.' },
+      cron: '⏱ <b>{t} s</b> from your words to the answer starting<small>Answer arriving: {c} s · Voice starting: {v} s · Average of last {n}: {m} s</small>',
+      ajudaTitulo: '📖 How to use — step by step',
+      ajuda: '<ol>'
+        + '<li><b>Keep the program\'s black window open.</b> It is called "TRADUTOR". You can minimize it, just don\'t close it.</li>'
+        + '<li><b>Press TURN ON TRADUTOR.</b> You hear "Tradutor is on". Done: every answer Claude sends here is read aloud.</li>'
+        + '<li><b>To talk without typing:</b> press TALK HANDS-FREE once. The browser asks for the microphone — press Allow.</li>'
+        + '<li><b>Start each sentence with the wake word.</b> E.g.: "<span class="exemplo"></span>, what\'s the weather tomorrow?" When you pause, the sentence appears in the Cowork box. Check it and press <b>Enter</b> to send.</li>'
+        + '<li><b>While the voice reads, the microphone pauses</b> (so it doesn\'t hear itself) and comes back when it finishes.</li>'
+        + '<li><b>To stop listening:</b> say "stop listening" or press the button again.</li></ol>'
+        + '<p><b>Claude in Cowork needs to know you use Tradutor.</b> See the <b>para-o-claude</b> file that came with it — it teaches Claude to send the answers here. The first time, the app asks to let Claude\'s browser use this address: press allow.</p>'
+        + '<p><b>Privacy:</b> answers stay only on your computer, in the program\'s memory. Speech recognition is the browser\'s own (in Chrome, your audio is sent to Google\'s speech service to become text).</p>'
+        + '<p><b>Notice:</b> Tradutor is an independent project made to be used with Claude. It is not an Anthropic product. "Claude" is a trademark of Anthropic.</p>'
+    }
+  };
+
+  var LIMITE = 480;              // pedaço máximo de cada frase lida
+  var INTERVALO = 2000;          // ritmo de reserva se a espera longa falhar
+  var SILENCIO = 1600;           // pausa que fecha a frase e envia
+  var CERTEZA_MIN = 0.45;        // abaixo disso o navegador "chutou": descarta
+  var ESPERA_RECADO = 8000;      // palavra de chamada sozinha: espera a frase por 8 s
+
+  function $(id){ return document.getElementById(id); }
+  var btnLigar = $('btnLigar'), btnRepetir = $('btnRepetir'), btnParar = $('btnParar');
+  var bolinha = $('bolinha'), eTxt = $('eTxt'), eSub = $('eSub'), elRecado = $('recado');
+  var btnEscuta = $('btnEscuta'), elOuvi = $('ouvi'), elCron = $('cron'), inPalavra = $('palavra');
+
+  function guardar(k, v){ try { localStorage.setItem(k, v); } catch(e){} }
+  function lembrar(k){ try { return localStorage.getItem(k); } catch(e){ return null; } }
+
+  var lang = lembrar('trad_lang') || (/^pt/i.test(navigator.language || '') ? 'pt' : 'en');
+  if (!T[lang]) lang = 'pt';
+  function t(k, v){
+    var s = T[lang][k];
+    if (v) for (var n in v) s = s.split('{' + n + '}').join(v[n]);
+    return s;
+  }
+
+  var temVoz = ('speechSynthesis' in window) && ('SpeechSynthesisUtterance' in window);
+  var RecClasse = window.SpeechRecognition || window.webkitSpeechRecognition || null;
+  var temEscuta = !!RecClasse;
+
+  var ligada = false, timer = null, ultimoId = 0, vel = 1;
+  var modoEspera = true, pedindo = false, descanso = 0, ciclo = 0, controle = null, falhas = 0;
+  var fila = [], indice = 0, tocando = false, falaAtual = null, ultimoTexto = '';
+  var escutaLigada = false, rec = null, recAtivo = false;
+  var juntando = '', timerEnvio = null, timerVolta = null, falhasRede = 0;
+  var tUltimaPalavra = 0, tFala = 0, tChegou = 0, medidas = [];
+  var armadoAte = 0, timerArmado = null, ctxBip = null;
+  var estadoAtual = ['', 'desligado', 'desligadoSub', null];   // pra retraduzir ao trocar de idioma
+
+  ultimoId = parseFloat(lembrar('trad_id')) || 0;
+  try { medidas = JSON.parse(lembrar('trad_cron') || '[]') || []; } catch(e){ medidas = []; }
+
+  /* estado(classe, chaveTitulo, chaveDetalhe, variaveis) — guarda as CHAVES, não o texto */
+  function estado(cls, kTitulo, kDetalhe, v){
+    estadoAtual = [cls, kTitulo, kDetalhe, v || null];
+    bolinha.className = 'bolinha' + (cls ? ' ' + cls : '');
+    eTxt.textContent = t(kTitulo, v);
+    if (kDetalhe) eSub.textContent = t(kDetalhe, v);
+  }
+  function escapar(s){ return String(s).replace(/[&<>"]/g, function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+  function seg(ms){ return (ms / 1000).toFixed(1).replace('.', lang === 'pt' ? ',' : '.'); }
+
+  /* ---------------- cronômetro: da sua fala até a resposta tocar ---------------- */
+  function mostrarCron(){
+    if (!tFala || !tChegou) return;
+    var agora = Date.now(), total = agora - tFala, chegar = tChegou - tFala, voz = agora - tChegou;
+    tFala = 0; tChegou = 0;
+    if (total < 0 || total > 600000) return;
+    medidas.push(total); if (medidas.length > 5) medidas = medidas.slice(-5);
+    guardar('trad_cron', JSON.stringify(medidas));
+    var media = medidas.reduce(function(a,b){ return a + b; }, 0) / medidas.length;
+    elCron.className = 'cron on';
+    elCron.innerHTML = t('cron', {t: seg(total), c: seg(chegar), v: seg(voz), n: medidas.length, m: seg(media)});
+  }
+
+  /* ---------------- quebra o texto em frases que a voz lê bem ---------------- */
+  function picar(texto){
+    var limpo = String(texto || '')
+      .replace(/\r/g,' ')
+      .replace(/https?:\/\/\S+/g,' ')          // link não se lê em voz alta
+      .replace(/[*_`#>|]+/g,' ')
+      .replace(/^\s*[-–—•]\s+/gm,'')
+      .replace(/\s*\n\s*/g,'. ')
+      .replace(/\.\s*[-–—•]\s+/g,'. ')
+      .replace(/\.{2,}/g,'.')
+      .replace(/\s+/g,' ')
+      .trim();
+    if (!limpo) return [];
+    var frases = limpo.match(/[^.!?;:]+[.!?;:]*\s*/g) || [limpo];
+    var pedacos = [], acc = '';
+    frases.forEach(function(f){
+      f = f.trim(); if (!f) return;
+      while (f.length > LIMITE){
+        var corte = f.lastIndexOf(' ', LIMITE); if (corte < 60) corte = LIMITE;
+        if (acc){ pedacos.push(acc.trim()); acc = ''; }
+        pedacos.push(f.slice(0, corte).trim());
+        f = f.slice(corte).trim();
+      }
+      if ((acc + ' ' + f).trim().length <= LIMITE) acc = (acc + ' ' + f).trim();
+      else { if (acc) pedacos.push(acc.trim()); acc = f; }
+    });
+    if (acc.trim()) pedacos.push(acc.trim());
+    return pedacos;
+  }
+
+  /* ---------------- as vozes do computador ----------------
+     O navegador não diz se a voz é de mulher ou de homem; a gente reconhece
+     pelos nomes mais comuns do Windows, Chrome e Edge. Voz desconhecida
+     aparece só com o nome. A escolha fica guardada por idioma. */
+  var RE_FEM  = /Maria|Francisca|Thalita|Luciana|Leila|Yara|Brenda|Giovanna|Manuela|Elza|Let[ií]cia|Vit[oó]ria|Google portugu|Zira|Aria|Jenny|Michelle|Emma|Ava|Samantha|Susan|Hazel|Libby|Sonia|Google US English|Female/i;
+  var RE_MASC = /Daniel|Antonio|Donato|F[aá]bio|Humberto|J[uú]lio|Nicolau|Val[eé]rio|David|Mark|Guy|Christopher|Eric|Roger|Andrew|Brian|George|Ryan|\bMale/i;
+  function vozesDoIdioma(){
+    try{
+      var vs = speechSynthesis.getVoices() || [];
+      var alvo = T[lang].fala.toLowerCase(), base = alvo.slice(0, 2);
+      var certas = vs.filter(function(v){ return String(v.lang).replace('_','-').toLowerCase() === alvo; });
+      if (!certas.length) certas = vs.filter(function(v){ return String(v.lang).toLowerCase().indexOf(base) === 0; });
+      return certas;
+    }catch(e){ return []; }
+  }
+  function generoDa(v){ return RE_FEM.test(v.name) ? 'feminina' : (RE_MASC.test(v.name) ? 'masculina' : ''); }
+  function nomeCurto(v){ return String(v.name).replace(/^Microsoft\s+/i, '').replace(/\s+-\s+.*$/, '').replace(/\s+Online.*$/i, ''); }
+  function vozDoIdioma(){
+    var certas = vozesDoIdioma();
+    var escolhida = lembrar('trad_voz_' + lang);
+    if (escolhida){
+      for (var i = 0; i < certas.length; i++) if (certas[i].name === escolhida) return certas[i];
+    }
+    var boa = certas.filter(function(v){ return T[lang].vozes.test(v.name); });
+    return (boa[0] || certas[0]) || null;
+  }
+  var selVoz = $('voz');
+  function montarVozes(){
+    var certas = vozesDoIdioma(), escolhida = lembrar('trad_voz_' + lang) || '';
+    selVoz.innerHTML = '';
+    var o0 = document.createElement('option'); o0.value = ''; o0.textContent = t('vozAuto'); selVoz.appendChild(o0);
+    certas.forEach(function(v){
+      var o = document.createElement('option'), g = generoDa(v);
+      o.value = v.name; o.textContent = nomeCurto(v) + (g ? ' — ' + t(g) : '');
+      if (v.name === escolhida) o.selected = true;
+      selVoz.appendChild(o);
+    });
+    selVoz.setAttribute('aria-label', t('vozRotulo'));
+  }
+  selVoz.addEventListener('change', function(){
+    guardar('trad_voz_' + lang, selVoz.value);
+    amostraVoz();
+  });
+  function amostraVoz(){
+    if (!temVoz || tocando) return;
+    try { speechSynthesis.cancel(); speechSynthesis.speak(frase(t('amostra'))); } catch(e){}
+  }
+  function frase(texto){
+    var u = new SpeechSynthesisUtterance(texto);
+    u.lang = T[lang].fala; u.rate = vel;
+    var v = vozDoIdioma(); if (v) u.voice = v;
+    return u;
+  }
+
+  /* ---------------- lê a fila: a próxima frase só começa quando a anterior ACABA ---------------- */
+  function tocar(){
+    if (indice >= fila.length){ acabou(); return; }
+    var u = frase(fila[indice]);
+    falaAtual = u;
+    // Vigia: se a voz do computador não começar em 6 s, não deixa a página presa em "lendo".
+    var vigia = setTimeout(function(){
+      if (falaAtual !== u || !tocando) return;
+      pararLeitura(false);
+      estado('erro', 'vozTravou', 'vozTravouSub');
+    }, 6000);
+    u.onstart = function(){ clearTimeout(vigia); estado('lendo', 'lendo', 'parte', {a: indice + 1, b: fila.length}); if (indice === 0) mostrarCron(); };
+    u.onend = function(){ if (falaAtual !== u) return; indice++; if (tocando) tocar(); };
+    u.onerror = function(){ if (falaAtual !== u) return; indice++; if (tocando) tocar(); };
+    // O Chrome às vezes "trava" a voz depois de muito tempo aberto: limpa e destrava antes de começar.
+    if (indice === 0){ try { speechSynthesis.cancel(); speechSynthesis.resume(); } catch(e){} }
+    setTimeout(function(){ if (falaAtual === u && tocando){ try { speechSynthesis.resume(); } catch(e){} speechSynthesis.speak(u); } }, 80);
+  }
+
+  function acabou(){
+    tocando = false; falaAtual = null;
+    btnParar.disabled = true;
+    if (ligada) estado('ouvindo', 'deOuvido', 'esperando');
+    else estado('', 'desligado', 'desligadoSub');
+    retomarEscuta(500);
+  }
+
+  function pararLeitura(silencioso){
+    tocando = false; falaAtual = null;
+    if (temVoz){ try { speechSynthesis.cancel(); } catch(e){} }
+    btnParar.disabled = true;
+    if (!silencioso && ligada) estado('ouvindo', 'deOuvido', 'esperando');
+    if (!silencioso) retomarEscuta(300);
+  }
+
+  /* Duas abas abertas liam a mesma resposta ao mesmo tempo = voz dobrada.
+     A primeira que pegar marca o número; as outras ficam quietas. */
+  function jaLidoPorOutraAba(id){
+    var marca = lembrar('trad_lido');
+    if (marca && parseFloat(marca) >= id) return true;
+    guardar('trad_lido', String(id));
+    return false;
+  }
+
+  /* Resposta chegou enquanto ainda lê? Entra no fim da fila, nada é cortado. */
+  function enfileirar(texto){
+    if (!tocando){ ler(texto); return; }
+    var novos = picar(texto);
+    if (!novos.length) return;
+    fila = fila.concat(novos);
+    ultimoTexto = ultimoTexto + ' ' + texto;
+    elRecado.textContent = ultimoTexto;
+  }
+
+  function ler(texto){
+    if (!temVoz){ estado('erro', 'semVoz', 'semVozSub'); return; }
+    pararLeitura(true);
+    fila = picar(texto); indice = 0;
+    if (!fila.length) return;
+    ultimoTexto = texto;
+    elRecado.textContent = texto;
+    elRecado.classList.add('on');
+    btnRepetir.disabled = false;
+    btnParar.disabled = false;
+    tocando = true;
+    pausarEscuta();
+    tocar();
+  }
+
+  /* ---------------- olha a caixa de respostas ----------------
+     Pergunta uma vez e o programa SEGURA a resposta até chegar coisa nova
+     (até 20 s). Por isso a leitura começa quase na hora. */
+  function proximaEspiada(){
+    if (!ligada || pedindo) return;
+    clearTimeout(timer);
+    timer = setTimeout(espiar, descanso);
+  }
+
+  function espiar(){
+    if (!ligada || pedindo) return;
+    var meuCiclo = ciclo, t0 = Date.now();
+    pedindo = true;
+    try { controle = new AbortController(); } catch(e){ controle = null; }
+    fetch('/recado?desde=' + ultimoId + (modoEspera ? '&esperar=1' : '') + '&cb=' + Date.now(),
+          {cache:'no-store', signal: controle ? controle.signal : undefined})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        pedindo = false;
+        if (!ligada || meuCiclo !== ciclo) return;
+        if (falhas >= 3 && !tocando) estado('ouvindo', 'deOuvido', 'esperando');
+        falhas = 0;
+        if (modoEspera && !(d && d.espera === true) && (Date.now() - t0) < 2000) modoEspera = false;
+        descanso = modoEspera ? 0 : INTERVALO;
+        if (d && d.ok && !d.vazio && d.texto){
+          ultimoId = d.id;
+          guardar('trad_id', ultimoId);
+          if (!jaLidoPorOutraAba(d.id)){
+            if (tFala && !tChegou && !tocando) tChegou = Date.now();
+            enfileirar(d.texto);
+          }
+        }
+        proximaEspiada();
+      })
+      .catch(function(){
+        pedindo = false;
+        if (!ligada || meuCiclo !== ciclo) return;
+        falhas++;
+        if (falhas === 3) estado('erro', 'semPrograma', 'semProgramaSub');
+        descanso = Math.min(15000, 1000 * falhas);
+        proximaEspiada();
+      });
+  }
+
+  /* ---------------- ligar / desligar ---------------- */
+  btnLigar.addEventListener('click', function(){
+    ligada = !ligada;
+    if (ligada){
+      btnLigar.classList.add('on');
+      btnLigar.innerHTML = t('ligado');
+      estado('ouvindo', 'deOuvido', 'esperando');
+      // O toque no botão libera o som (todo navegador exige um toque antes).
+      if (temVoz){ try { speechSynthesis.cancel(); speechSynthesis.speak(frase(t('ligadoFala'))); } catch(e){} }
+      modoEspera = true; pedindo = false; descanso = 0; falhas = 0;
+      if (ultimoId){ espiar(); }
+      else {
+        // Primeira vez neste navegador: começa do agora (não lê respostas antigas).
+        var meuCiclo = ciclo;
+        fetch('/ping', {cache:'no-store'}).then(function(r){ return r.json(); })
+          .then(function(d){ if (d && d.ultimo) { ultimoId = d.ultimo; guardar('trad_id', ultimoId); } })
+          .catch(function(){})
+          .then(function(){ if (ligada && meuCiclo === ciclo) espiar(); });
+      }
+    } else {
+      btnLigar.classList.remove('on');
+      btnLigar.innerHTML = t('ligar');
+      ciclo++;
+      clearTimeout(timer); timer = null;
+      if (controle){ try { controle.abort(); } catch(e){} controle = null; }
+      pedindo = false;
+      pararLeitura(true);
+      if (escutaLigada) desligarEscuta(t('escutaOffJunto'));
+      estado('', 'desligado', 'desligadoSub');
+    }
+  });
+
+  btnRepetir.addEventListener('click', function(){ if (ultimoTexto) ler(ultimoTexto); });
+  btnParar.addEventListener('click', function(){ pararLeitura(false); });
+
+  // As vozes chegam depois que a página abre: monta a lista quando elas avisarem.
+  if (temVoz){ try { speechSynthesis.getVoices(); speechSynthesis.onvoiceschanged = function(){ montarVozes(); }; } catch(e){} }
+  $('btnOuvirVoz').addEventListener('click', amostraVoz);
+
+  /* ---------------- velocidade e tamanho das letras ---------------- */
+  function marcarVel(){
+    document.querySelectorAll('.chip[data-v]').forEach(function(x){
+      var on = parseFloat(x.dataset.v) === vel;
+      x.classList.toggle('ativo', on); x.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+  }
+  document.querySelectorAll('.chip[data-v]').forEach(function(c){
+    c.addEventListener('click', function(){ vel = parseFloat(c.dataset.v) || 1; guardar('trad_vel', vel); marcarVel(); });
+  });
+  var esc = 1;
+  function aplicarEsc(){ document.documentElement.style.setProperty('--esc', esc); guardar('trad_esc', esc); }
+  $('mais').addEventListener('click', function(){ esc = Math.min(1.8, esc + 0.1); aplicarEsc(); });
+  $('menos').addEventListener('click', function(){ esc = Math.max(0.85, esc - 0.1); aplicarEsc(); });
+  var e0 = parseFloat(lembrar('trad_esc')); if (e0){ esc = e0; aplicarEsc(); }
+  var v0 = parseFloat(lembrar('trad_vel')); if (v0){ vel = v0; }
+  marcarVel();
+
+  /* v1.7 (14/10/2026): o Tradutor só cola a frase na caixa do Cowork; quem aperta
+     Enter é a PESSOA. Termos de Uso da Anthropic, seção 3 (contas pessoais): não
+     acessar o Claude por meios automáticos sem permissão. Não há opção de enviar
+     sozinho. */
+  try { localStorage.removeItem('trad_enviar'); } catch(e){}
+
+  /* ================= PALAVRA DE CHAMADA =================
+     SEMPRE ligada: só vai pro Claude o que a pessoa falou de propósito,
+     começando com a palavra. TV e conversa do lado nunca viram mensagem.
+     Cada idioma guarda a sua palavra. */
+  var palavra = '', RE_CHAMADA = null;
+  function carregarPalavra(){
+    palavra = (lembrar('trad_palavra_' + lang) || T[lang].palavraPadrao).trim() || T[lang].palavraPadrao;
+    inPalavra.value = palavra;
+    montarChamada();
+  }
+  function montarChamada(){
+    var w = palavra.toLowerCase().replace(/[.*+?^${}()|[\]\\]/g, '\\$&').replace(/\s+/g, '\\s+');
+    RE_CHAMADA = new RegExp('^\\s*(?:(?:' + T[lang].prefixos + ')\\s*,?\\s+)?' + w + '(?![\\p{L}\\p{N}])[\\s,.!:;-]*', 'iu');
+  }
+  function mostrarChamada(){
+    document.querySelectorAll('.exemplo').forEach(function(x){ x.textContent = palavra; });
+    $('notaChamada').textContent = t('notaChamada', {p: palavra});
+  }
+  inPalavra.addEventListener('change', function(){
+    var p = inPalavra.value.replace(/[^\p{L}\p{N} ]/gu, '').trim();
+    if (!p){ inPalavra.value = palavra; return; }
+    palavra = p; inPalavra.value = p; guardar('trad_palavra_' + lang, p);
+    montarChamada(); mostrarChamada();
+  });
+
+  /* ================= ESCUTA CONTÍNUA ================= */
+  var RE_HESITA = /^(?:h+u+m+|h+m+|a+h+|a+n+h+|é+|e+h+|ã+h*|u+h+|h+ã+|ó+|ô+|u+m+|e+r+m*)[\s.!?,]*$/iu;
+
+  function ouvi(cls, html){ elOuvi.className = 'ouvi on' + (cls ? ' ' + cls : ''); elOuvi.innerHTML = html; }
+
+  function botaoEscuta(){
+    btnEscuta.classList.remove('on', 'pausada');
+    if (!temEscuta){ btnEscuta.innerHTML = t('escutaSem'); return; }
+    if (!escutaLigada){
+      btnEscuta.innerHTML = t('escuta');
+      btnEscuta.setAttribute('aria-pressed', 'false');
+      return;
+    }
+    btnEscuta.setAttribute('aria-pressed', 'true');
+    if (tocando){
+      btnEscuta.classList.add('pausada');
+      btnEscuta.innerHTML = t('escutaPausada');
+    } else {
+      btnEscuta.classList.add('on');
+      btnEscuta.innerHTML = t('escutaLigada');
+    }
+  }
+
+  function podeOuvir(){
+    if (!escutaLigada || tocando) return false;
+    try { if (temVoz && speechSynthesis.speaking) return false; } catch(e){}
+    return true;
+  }
+
+  function criarRec(){
+    var r = new RecClasse();
+    r.lang = T[lang].fala; r.continuous = true; r.interimResults = true; r.maxAlternatives = 5;
+    r.onresult = function(ev){
+      var parcial = '';
+      for (var i = ev.resultIndex; i < ev.results.length; i++){
+        var tx = ev.results[i][0].transcript;
+        if (ev.results[i].isFinal){
+          var cert = ev.results[i][0].confidence;
+          if (cert > 0 && cert < CERTEZA_MIN) continue;          // barulho
+          if (!juntando && !RE_CHAMADA.test(tx)){                 // a palavra pode estar noutra aposta
+            for (var a = 1; a < ev.results[i].length; a++){
+              var alt = ev.results[i][a].transcript;
+              if (RE_CHAMADA.test(alt)){ tx = alt; break; }
+            }
+          }
+          juntando = (juntando + ' ' + tx).trim();
+          tUltimaPalavra = Date.now();
+        }
+        else parcial += tx;
+      }
+      var mostrar = (juntando + ' ' + parcial).trim();
+      if (mostrar) ouvi('', '<b>' + t('ouvindo') + '</b> ' + escapar(mostrar));
+      clearTimeout(timerEnvio);
+      if (juntando) timerEnvio = setTimeout(fecharFrase, SILENCIO);
+    };
+    r.onerror = function(ev){
+      var e = ev && ev.error;
+      if (e === 'not-allowed' || e === 'service-not-allowed') desligarEscuta(t('micNegado'), true);
+      else if (e === 'network'){ falhasRede++; ouvi('erro', t('redeVoz')); }
+      else if (e === 'audio-capture') desligarEscuta(t('micSem'), true);
+    };
+    r.onend = function(){
+      recAtivo = false;
+      if (podeOuvir()) retomarEscuta(falhasRede ? Math.min(8000, 1000 * falhasRede) : 250);
+    };
+    r.onstart = function(){ falhasRede = 0; botaoEscuta(); };
+    return r;
+  }
+
+  function iniciarRec(){
+    if (!escutaLigada) return;
+    if (recAtivo){ botaoEscuta(); return; }
+    if (!podeOuvir()){ botaoEscuta(); if (!tocando) retomarEscuta(500); return; }
+    if (!rec) rec = criarRec();
+    try { rec.start(); recAtivo = true; } catch(e){}
+    botaoEscuta();
+  }
+  function retomarEscuta(ms){
+    if (!escutaLigada) return;
+    clearTimeout(timerVolta);
+    timerVolta = setTimeout(iniciarRec, ms || 0);
+  }
+  function pausarEscuta(){
+    clearTimeout(timerVolta);
+    if (!escutaLigada) return;
+    if (juntando){ clearTimeout(timerEnvio); fecharFrase(); }
+    if (rec && recAtivo){ try { rec.abort(); } catch(e){} }
+    recAtivo = false;
+    botaoEscuta();
+  }
+
+  /* bipe curtinho: "pode falar" depois da palavra de chamada sozinha */
+  function prepararBip(){
+    try { if (!ctxBip) ctxBip = new (window.AudioContext || window.webkitAudioContext)();
+          if (ctxBip.state === 'suspended') ctxBip.resume(); } catch(e){}
+  }
+  function bip(){
+    try {
+      prepararBip(); if (!ctxBip) return;
+      var o = ctxBip.createOscillator(), g = ctxBip.createGain(), t0 = ctxBip.currentTime;
+      o.type = 'sine'; o.frequency.value = 880;
+      g.gain.setValueAtTime(0.0001, t0);
+      g.gain.exponentialRampToValueAtTime(0.25, t0 + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t0 + 0.18);
+      o.connect(g); g.connect(ctxBip.destination); o.start(t0); o.stop(t0 + 0.2);
+    } catch(e){}
+  }
+  function armar(){
+    armadoAte = Date.now() + ESPERA_RECADO;
+    bip();
+    ouvi('', t('podeFalar'));
+    clearTimeout(timerArmado);
+    timerArmado = setTimeout(function(){
+      if (armadoAte && Date.now() >= armadoAte){
+        armadoAte = 0;
+        ouvi('ignorado', t('naoOuvi', {p: escapar(palavra)}));
+      }
+    }, ESPERA_RECADO + 200);
+  }
+
+  function fecharFrase(){
+    var texto = juntando.trim();
+    juntando = '';
+    if (!texto) return;
+    var comChamada = RE_CHAMADA.test(texto);
+    var resto = comChamada ? texto.replace(RE_CHAMADA, '').trim() : texto;
+    if (!comChamada && armadoAte && Date.now() < armadoAte){ comChamada = true; resto = texto; }
+    if (resto){ armadoAte = 0; clearTimeout(timerArmado); }
+    if (T[lang].parar.test(resto)){ desligarEscuta(t('disseParar')); return; }
+    if (!comChamada){ ouvi('ignorado', '<b>' + t('ignoradoSem', {p: escapar(palavra)}) + '</b> ' + escapar(texto)); return; }
+    if (!resto){ armar(); return; }
+    // "hum", "ah", "é" não vão. "sim" e "não" VÃO (são resposta!).
+    if (resto.replace(/[^\p{L}\p{N}]/gu, '').length < 2 || RE_HESITA.test(resto)){
+      ouvi('ignorado', '<b>' + t('ignoradoCurto') + '</b> ' + escapar(resto));
+      return;
+    }
+    enviarFala(resto.charAt(0).toUpperCase() + resto.slice(1));
+  }
+
+  function enviarFala(texto){
+    tFala = tUltimaPalavra || Date.now(); tChegou = 0;
+    ouvi('', '<b>' + t('enviando') + '</b> ' + escapar(texto));
+    fetch('/fala', {method:'POST', headers:{'Content-Type':'text/plain'}, body: JSON.stringify({texto: texto})})
+      .then(function(r){ return r.json(); })
+      .then(function(d){
+        if (d && d.ok){ ouvi('enviado', '<b>' + t('noCaixa') + '</b> ' + escapar(texto)); avisoFalado(t('faladoColada')); return; }
+        tFala = 0;
+        var msg = (d && d.codigo && T[lang].erros[d.codigo]) || T[lang].erros.outro;
+        ouvi('erro', '<b>' + escapar(msg) + '</b> ' + t('suaFrase') + ' ' + escapar(texto));
+        avisoFalado(msg);
+      })
+      .catch(function(){
+        tFala = 0;
+        ouvi('erro', t('semPrograma2'));
+        avisoFalado(t('semPrograma2').replace(/<[^>]+>/g, ''));
+      });
+  }
+
+  /* v1.8 (15/10/2026): quem não enxerga a tela não sabia se a frase tinha ido pra
+     caixa do Cowork. Agora o Tradutor AVISA em voz alta ("Frase na caixa. Aperte
+     Enter para mandar.") — e também fala o erro, se não deu. A escuta fica
+     pausada enquanto ele fala, pra não ouvir a própria voz. Se uma resposta do
+     Claude estiver sendo lida, o aviso não entra: nada é cortado. */
+  function avisoFalado(texto){
+    if (!temVoz || tocando || !texto) return;
+    try {
+      pausarEscuta();
+      var u = frase(texto), voltou = false;
+      var voltar = function(){ if (voltou) return; voltou = true; retomarEscuta(400); };
+      u.onend = voltar; u.onerror = voltar;
+      setTimeout(voltar, 8000);   // vigia: a voz travou? a escuta volta mesmo assim
+      try { speechSynthesis.resume(); } catch(e){}
+      speechSynthesis.speak(u);
+    } catch(e){ retomarEscuta(400); }
+  }
+
+  /* 29/09/2026 (Neris: "ficar pra lá e pra cá desconcentra a gente"): enquanto a escuta
+     estiver ligada, o microfone fica SEGURO aberto. O reconhecimento de voz do Chrome solta
+     e pega o microfone a cada pausa e toda vez que a voz lê; a cada vez o Windows mostrava e
+     escondia o ícone do microfone, e os ícones da barra de tarefas andavam pro lado.
+     Segurar NÃO grava nada: o som não vai pra lugar nenhum, só mantém o aviso parado.
+     Sem permissão ou sem microfone: segue do jeito de antes. */
+  var micPreso = null, micPedindo = false;
+  function segurarMic(){
+    if (micPreso || micPedindo) return;
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) return;
+    micPedindo = true;
+    navigator.mediaDevices.getUserMedia({ audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false } })
+      .then(function(s){
+        micPedindo = false;
+        if (!escutaLigada){ s.getTracks().forEach(function(tr){ tr.stop(); }); return; }
+        micPreso = s;
+      })
+      .catch(function(){ micPedindo = false; });
+  }
+  function soltarMic(){
+    if (!micPreso) return;
+    try { micPreso.getTracks().forEach(function(tr){ tr.stop(); }); } catch(e){}
+    micPreso = null;
+  }
+
+  function desligarEscuta(motivo, erro){
+    escutaLigada = false;
+    soltarMic();
+    clearTimeout(timerEnvio); clearTimeout(timerVolta);
+    if (juntando) fecharFrase();
+    if (rec){ try { rec.abort(); } catch(e){} }
+    recAtivo = false;
+    botaoEscuta();
+    if (motivo) ouvi(erro ? 'erro' : '', (erro ? '<b>' + t('atencao') + '</b> ' : '') + escapar(motivo));
+  }
+
+  if (!temEscuta){ btnEscuta.disabled = true; }
+
+  btnEscuta.addEventListener('click', function(){
+    if (!temEscuta) return;
+    if (escutaLigada){ desligarEscuta(t('escutaOff')); return; }
+    escutaLigada = true;
+    segurarMic();
+    prepararBip();
+    if (!ligada) btnLigar.click();          // a resposta precisa de alguém pra ler
+    ouvi('', t('escutaOn', {p: escapar(palavra)}));
+    botaoEscuta();
+    retomarEscuta(1500);                    // deixa o "ligado" terminar antes de ouvir
+  });
+
+  /* ================= IDIOMA =================
+     Troca tudo: textos da tela, voz que lê, idioma que escuta e palavra de chamada. */
+  function aplicarIdioma(){
+    document.documentElement.lang = T[lang].htmlLang;
+    document.querySelectorAll('[data-t]').forEach(function(x){ x.textContent = t(x.dataset.t); });
+    document.querySelectorAll('[data-th]').forEach(function(x){ x.innerHTML = t(x.dataset.th); });
+    document.querySelectorAll('.idioma .chip').forEach(function(x){
+      var on = x.dataset.lang === lang;
+      x.classList.toggle('ativo', on); x.setAttribute('aria-pressed', on ? 'true' : 'false');
+    });
+    btnLigar.innerHTML = t(ligada ? 'ligado' : 'ligar');
+    btnRepetir.innerHTML = t('repetir'); btnParar.innerHTML = t('parar2');
+    $('menos').setAttribute('aria-label', t('menos')); $('mais').setAttribute('aria-label', t('mais'));
+    inPalavra.setAttribute('aria-label', t('palavraRotulo'));
+    $('notaVoz').textContent = t(temVoz ? 'notaVoz' : 'notaVozSem');
+    estado(estadoAtual[0], estadoAtual[1], estadoAtual[2], estadoAtual[3]);
+    carregarPalavra(); mostrarChamada();
+    montarVozes();
+    if (!temVoz){ selVoz.disabled = true; $('btnOuvirVoz').disabled = true; }
+    botaoEscuta();
+    if (!temEscuta) ouvi('erro', t('escutaSemNav'));
+    // A escuta já ligada precisa recomeçar no idioma novo.
+    if (rec){ try { rec.abort(); } catch(e){} rec = null; recAtivo = false; retomarEscuta(300); }
+  }
+  document.querySelectorAll('.idioma .chip').forEach(function(c){
+    c.addEventListener('click', function(){
+      if (c.dataset.lang === lang) return;
+      lang = c.dataset.lang; guardar('trad_lang', lang);
+      aplicarIdioma();
+    });
+  });
+  aplicarIdioma();
+
+  /* a aba dormiu e voltou: espia na hora */
+  document.addEventListener('visibilitychange', function(){
+    if (!document.hidden && ligada && !pedindo){ descanso = 0; proximaEspiada(); }
+  });
+
+})();
+</script>
+</body>
+</html>

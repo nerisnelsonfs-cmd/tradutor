@@ -1,0 +1,7 @@
+# copias de seguranca e arquivos temporarios nunca vao pro GitHub
+*.BAK*
+*.bak
+*.log
+*.tmp
+.env
+Thumbs.db
