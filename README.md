@@ -1,6 +1,28 @@
-# 🎧 Tradutor — voz para o Cowork
+# 🎧 Tradutor — converse por voz com o Claude no Cowork
 
-**Feito para o Cowork, no app Claude para computador: o Claude trabalha, responde e o seu computador lê a resposta em voz alta. Você fala, e a sua frase aparece na caixa do Cowork — você confere e aperta Enter.**
+**Você fala e a frase aparece na caixa do Cowork. O Claude responde e o Tradutor lê a resposta em voz alta.**
+Para quem prefere falar e escutar em vez de digitar e ler.
+
+<p align="center">
+  <a href="https://github.com/nerisnelsonfs-cmd/tradutor/releases/latest">
+    <img src="imagens/tradutor-demonstracao.png" width="280" alt="Demonstração com telas reais do Tradutor: escuta ligada, a frase 'me explica isso de novo' já na caixa do Cowork e a tecla Enter, que é você quem aperta">
+  </a>
+</p>
+
+## ⬇️ [Baixar o Tradutor — grátis, para Windows](https://github.com/nerisnelsonfs-cmd/tradutor/releases/latest)
+
+1. Baixe o **Tradutor-v1.8.zip** e extraia a pasta.
+2. Dois cliques em **INSTALAR-TRADUTOR**.
+3. Abra o ícone **Tradutor** e toque em **LIGAR O TRADUTOR**.
+
+Depois, ensine o Claude do Cowork com a pasta **para-o-claude** ([como fazer](#ensinar-o-claude-do-cowork-a-mandar-as-respostas)).
+
+**Precisa de:** Windows 10 ou 11 · Chrome ou Edge · o app Claude para computador, com o Cowork.
+**Gratuito e de código aberto (MIT).** Projeto independente — não é produto da Anthropic.
+
+🇧🇷 [Português](#português) · 🇺🇸 [English](#english) · ❓ [Perguntas frequentes](#perguntas-frequentes) · [FAQ](#frequently-asked-questions)
+
+---
 
 Criado por **Nerisnelson Ferreira da Silva** · Equipe Porta Aberta IA
 
@@ -8,10 +30,6 @@ Criado por **Nerisnelson Ferreira da Silva** · Equipe Porta Aberta IA
 
 **Um projeto social:** o Tradutor nasceu para ajudar também **pessoas com baixa visão** —
 em vez de forçar a vista para ler respostas longas na tela, a pessoa **ouve**.
-
-🇧🇷 [Português](#português) · 🇺🇸 [English](#english)
-
-❓ [Perguntas frequentes](#perguntas-frequentes) · [FAQ](#frequently-asked-questions)
 
 ---
 
@@ -26,6 +44,8 @@ entregar a resposta ao Tradutor, que roda no seu próprio computador.
 
 ### Pra quem é
 
+- **Qualquer pessoa** que acha mais fácil **falar e escutar** do que digitar e ler —
+  mesmo enxergando bem.
 - **Pessoas com baixa visão:** ouvem as respostas em vez de ler, e podem aumentar as
   letras da página com o botão **A+**.
 - **Idosos** e quem se cansa de tela.
@@ -258,6 +278,8 @@ marcas da Anthropic, PBC.
 
 **Made for Cowork in the Claude desktop app: Claude works, answers, and your computer reads the answer out loud. You speak, your sentence appears in the Cowork box, and you press Enter.**
 
+⬇️ **[Download Tradutor — free, for Windows](https://github.com/nerisnelsonfs-cmd/tradutor/releases/latest)**
+
 ### Why Cowork
 
 Tradutor is made for the moments when Claude is **working in Cowork** and you want to **hear** its answers and
@@ -268,7 +290,7 @@ Tradutor, which runs on your own computer.
 
 **A social project:** Tradutor was made to help **people with low vision** — instead of
 straining to read long answers on screen, they **listen**. Also for older adults, anyone tired
-of screens, and people who would rather **speak** than type. The page has screen-reader labels
+of screens, and anyone who finds it easier to **speak and listen** than to type and read. The page has screen-reader labels
 but has **not yet been tested** with NVDA or Narrator. **Portuguese or English:** a button at the top switches
 the screen text, the reading voice and the listening language (wake word "Translator" in English).
 You can also pick a **female or male voice** from the voices installed on your computer.
