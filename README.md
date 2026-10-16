@@ -11,6 +11,8 @@ em vez de forçar a vista para ler respostas longas na tela, a pessoa **ouve**.
 
 🇧🇷 [Português](#português) · 🇺🇸 [English](#english)
 
+❓ [Perguntas frequentes](#perguntas-frequentes) · [FAQ](#frequently-asked-questions)
+
 ---
 
 ## Português
@@ -73,6 +75,44 @@ e da escuta. Cada idioma tem a sua palavra de chamada ("Tradutor" / "Translator"
 ou dois cliques em **DESINSTALAR-TRADUTOR**. Sai tudo.
 
 **Sem instalar:** dentro da pasta **programa**, dois cliques em **ABRIR-TRADUTOR**.
+
+### Perguntas frequentes
+
+**É de graça?**
+Sim. O Tradutor é gratuito e de código aberto (licença MIT). Não tem plano pago nem anúncio.
+
+**Funciona no celular?**
+Não. Ele roda no computador com **Windows 10 ou 11**, junto com o app **Claude para computador**.
+
+**Funciona com ChatGPT, Gemini ou o chat comum do Claude?**
+Não. Ele foi feito para o **Cowork**, no app Claude para computador. Quem manda as respostas
+para o Tradutor é o próprio Claude do Cowork, depois que você ensina com o arquivo **para-o-claude**.
+
+**Ele manda mensagens sozinho?**
+Não. Ele só coloca a sua frase na caixa do chat. **Quem aperta Enter é você.**
+
+**Precisa de microfone?**
+Só se você quiser falar. Para apenas **ouvir** as respostas, não precisa.
+
+**Precisa de internet?**
+Sim, para o reconhecimento da sua fala (é o do navegador; no Chrome, a sua voz vai para o serviço
+do Google virar texto). A **leitura** das respostas é feita pela voz do seu próprio computador.
+
+**É vírus? O Windows deu um aviso.**
+O aviso aparece porque o Tradutor não tem assinatura digital paga. Ele não pede senha de
+administrador e é feito de arquivos de texto que qualquer pessoa pode abrir e conferir.
+Veja a seção **É seguro?** logo abaixo.
+
+**Serve para pessoas cegas?**
+A página tem rótulos para leitor de tela, mas **ainda não foi testada** com NVDA ou Narrador.
+
+**Não está lendo nada. O que eu confiro?**
+1. A janela **TRADUTOR** está aberta (pode estar minimizada) e o botão diz **TRADUTOR LIGADO**.
+2. O Claude do Cowork recebeu as instruções da pasta **para-o-claude**.
+3. Você permitiu o endereço `http://127.0.0.1:47810` quando o app pediu.
+
+**Como desinstalar?**
+Configurações do Windows → **Aplicativos** → **Tradutor** → Desinstalar. Sai tudo.
 
 ### É seguro?
 
@@ -257,6 +297,31 @@ Windows 10/11 · Google Chrome or Microsoft Edge · the Claude desktop app with 
 
 **Uninstall:** Windows Settings → **Apps** → **Tradutor** → Uninstall, or double-click
 **DESINSTALAR-TRADUTOR**. **Without installing:** `programa/ABRIR-TRADUTOR.bat`.
+
+### Frequently asked questions
+
+**Is it free?** Yes. Free and open source (MIT license). No paid plan, no ads.
+
+**Does it work on a phone?** No. It runs on a **Windows 10 or 11** computer with the **Claude desktop app**.
+
+**Does it work with ChatGPT, Gemini or the regular Claude chat?** No. It is made for **Cowork** in the
+Claude desktop app. Claude in Cowork sends the answers to the Tradutor once you teach it with **para-o-claude**.
+
+**Does it send messages by itself?** No. It only puts your sentence in the chat box. **You press Enter.**
+
+**Do I need a microphone?** Only if you want to speak. To just **listen**, no.
+
+**Do I need internet?** Yes, for speech recognition (the browser's; in Chrome your voice goes to Google's
+speech service). Reading the answers uses your computer's own voice.
+
+**Windows showed a warning. Is it a virus?** The warning appears because the scripts are not code-signed.
+No administrator password; plain text files anyone can read. See **Is it safe?** below.
+
+**Is it for blind people?** The page has screen-reader labels but has **not yet been tested** with NVDA or Narrator.
+
+**It is not reading anything. What do I check?** The **TRADUTOR** window is open (it can be minimized) and the
+button says **TRADUTOR IS ON** · Claude in Cowork got the **para-o-claude** instructions · you allowed
+`http://127.0.0.1:47810` when the app asked.
 
 ### Is it safe?
 
