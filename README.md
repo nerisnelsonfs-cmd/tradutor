@@ -272,6 +272,8 @@ autoria. O programa é entregue "como está", sem garantia.
 Não é um produto da Anthropic, nem feito ou apoiado por ela. "Claude" e "Anthropic" são
 marcas da Anthropic, PBC.
 
+⭐ Se o Tradutor te ajudou, uma estrela aqui no GitHub ajuda outras pessoas a encontrarem ele.
+
 ---
 
 ## English
@@ -386,3 +388,5 @@ Created by **Nerisnelson Ferreira da Silva** — Equipe Porta Aberta IA.
 **Notice:** Tradutor is an independent project made to be used with Claude. It is not an
 Anthropic product and is not made or endorsed by Anthropic. "Claude" and "Anthropic" are
 trademarks of Anthropic, PBC.
+
+⭐ If Tradutor helped you, a star here on GitHub helps other people find it.
